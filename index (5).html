@@ -1,0 +1,320 @@
+<!doctype html>
+
+<html lang="id">  
+<head>  
+  <meta charset="utf-8" />  
+  <meta name="viewport" content="width=device-width,initial-scale=1" />  
+  <title>ALYASTORE — Katalog & Order</title>  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">  
+  <style>  
+    :root{--bg:#fdeaf3;--card:#fff0f6;--accent:#ff7fb3;--accent-dark:#cc2e6a;--muted:#8b4a66;--glass:rgba(255,255,255,0.6)}  
+    *{box-sizing:border-box}  
+    body{margin:0;font-family:Poppins,system-ui,Segoe UI,Roboto,Arial;background:linear-gradient(180deg,#ffeef6,#ffdce9);color:var(--muted)}  
+    header{display:flex;gap:16px;align-items:center;padding:18px 20px;background:linear-gradient(90deg,var(--accent),var(--accent-dark));color:#fff}  
+    header img.logo{width:86px;height:86px;border-radius:12px;object-fit:cover;box-shadow:0 8px 30px rgba(204,46,106,0.18)}  
+    header .brand{font-size:18px;font-weight:700;letter-spacing:0.6px}  
+    header .tag{font-size:12px;opacity:0.95}  
+    .container{max-width:1100px;margin:18px auto;padding:0 16px}  
+    .hero{background:linear-gradient(180deg,rgba(255,255,255,0.6),rgba(255,255,255,0.25));border-radius:14px;padding:18px;border:1px solid rgba(255,255,255,0.6);margin-bottom:18px}  
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}  
+    .card{background:var(--card);padding:18px;border-radius:14px;box-shadow:0 12px 30px rgba(204,46,106,0.06);border:1px solid rgba(255,255,255,0.6)}  
+    .card h3{margin:0 0 10px;font-size:15px;color:var(--accent-dark)}  
+    .card p{margin:0 0 12px;color:#7a4860}  
+    .actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}  
+    button.btn{cursor:pointer;padding:8px 12px;border-radius:28px;border:none;font-weight:700}  
+    button.outline{background:#fff;color:var(--accent-dark);border:1px solid rgba(0,0,0,0.06)}  
+    button.primary{background:linear-gradient(180deg,var(--accent),var(--accent-dark));color:#fff}/* modal */  
+.modal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);z-index:120;opacity:0;visibility:hidden;transition:all .18s}  
+.modal.open{opacity:1;visibility:visible}  
+.modal-card{width:94%;max-width:520px;background:#fff;border-radius:12px;padding:16px;box-shadow:0 18px 40px rgba(0,0,0,0.18)}  
+.modal-list{max-height:320px;overflow:auto;margin-top:8px}  
+.modal-list option{padding:8px}  
+.field{display:flex;gap:8px;margin-top:8px}  
+.field input,.field select{flex:1;padding:10px;border-radius:8px;border:1px solid #eee}  
+.small{font-size:13px;color:#8a5a78}  /* floating WA */
+.wa-group{position:fixed;right:14px;bottom:20px;display:flex;flex-direction:column;gap:10px;z-index:140}
+.wa-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:999px;background:linear-gradient(180deg,var(--accent),var(--accent-dark));color:#fff;text-decoration:none;box-shadow:0 12px 30px rgba(204,46,106,0.12)}
+
+footer{max-width:1100px;margin:24px auto;padding:18px;text-align:center;color:#fff;background:linear-gradient(90deg,var(--accent),var(--accent-dark));border-radius:12px}
+
+@media(max-width:720px){header{padding:12px}header img.logo{width:64px;height:64px} .modal-card{padding:12px}}
+  </style>  
+</head>  
+<body>  
+<!-- VIDEO TERSEMBUNYI + AUTOPLAY -->
+<video id="bgm" autoplay muted loop playsinline style="display:none;">
+  <source src="https://files.catbox.moe/su80gm.mp4" type="video/mp4">
+</video>
+
+<script>
+  document.addEventListener("click", function() {
+    const v = document.getElementById("bgm");
+    v.muted = false;
+    v.play();
+  }, { once: true });
+</script>
+  <header>  
+    <img class="logo" src="https://files.catbox.moe/a974cx.jpg" alt="ALYASTORE Logo">  
+    <div>  
+      <div class="brand">ALYASTORE✨</div>  
+      <div class="tag">Cheap • Fast • Trusted Service — Open 24H</div>  
+    </div>  
+  </header>  
+
+  <main class="container">  
+    <section class="hero">  
+      <h1 style="margin:0;color:var(--accent-dark)">Daftar Produk & Layanan</h1>  
+      <p class="small">Klik "Daftar" untuk melihat paket & harga. Klik "Beli" untuk pesan cepat lewat WhatsApp.</p>  
+    </section>
+
+    <div class="grid" id="productGrid"></div>    
+  </main>  
+
+  <!-- Modal (re-used) -->  
+  <div class="modal" id="priceModal" role="dialog" aria-hidden="true">  
+    <div class="modal-card">  
+      <h3 id="modalTitle">Pilih Paket</h3>  
+      <div class="small">Lengkapi data sebelum pesan (jika diperlukan)</div>
+
+      <div style="margin-top:10px">  
+        <label class="small">ID / Keterangan (opsional untuk produk game)</label>  
+        <input id="inputId" placeholder="ID / Nick / Keterangan (opsional)" style="width:100%;padding:10px;border-radius:8px;border:1px solid #eee;margin-top:6px">  
+      </div>    
+
+      <div style="margin-top:10px">  
+        <label class="small">Pilih Paket</label>  
+        <select id="selectPackage" style="width:100%;padding:10px;border-radius:8px;border:1px solid #eee;margin-top:6px"></select>  
+      </div>    
+
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">  
+        <button class="btn outline" onclick="closePriceModal()">Batal</button>  
+        <button class="btn primary" onclick="confirmPackage()">Pesan via WhatsApp</button>  
+      </div>  
+    </div>    
+  </div>  
+
+  <!-- Floating WhatsApp buttons -->  
+  <div class="wa-group">  
+    <a class="wa-btn" href="https://wa.me/6285837288017" target="_blank">💬 Chat Admin</a>  
+    <a class="wa-btn" id="orderNowBtn" href="https://wa.me/6285837288017?text=" target="_blank">🛒 Pesan Sekarang</a>  
+  </div>  
+
+  <footer>© ALYASTORE — Fast • Trusted • Safe. WA: +62 858-3728-8017</footer>  <script>  
+    // WhatsApp nomor tujuan (tanpa tanda +)  
+    const WA_NUMBER = '6285837288017';  // Product data: name, description, packages (label, price)  
+const PRODUCTS = [  
+  {  
+    id: 'freefire', title: 'Free Fire', desc: 'Diamond & Membership', packages: [  
+      ['50 Diamond','Rp 8.600'],['70 Diamond','Rp 11.800'],['100 Diamond','Rp 16.200'],['160 Diamond','Rp 25.500'],['180 Diamond','Rp 27.200'],['210 Diamond','Rp 30.500'],['250 Diamond','Rp 35.600'],['260 Diamond','Rp 37.200'],['280 Diamond','Rp 40.000'],['300 Diamond','Rp 43.600'],['355 Diamond','Rp 47.500'],['360 Diamond','Rp 49.300'],['375 Diamond','Rp 53.700'],['400 Diamond','Rp 54.900'],['455 Diamond','Rp 57.400'],['485 Diamond','Rp 62.800'],['500 Diamond','Rp 68.700'],['555 Diamond','Rp 74.300'],['600 Diamond','Rp 77.600'],['720 Diamond','Rp 87.700'],['800 Diamond','Rp 93.200'],['860 Diamond','Rp 106.900'],['930 Diamond','Rp 117.700'],['1000 Diamond','Rp 122.800'],['1440 Diamond','Rp 168.400'],['2000 Diamond','Rp 239.300']  
+    ], extra: [  
+      ['MM Lite','Rp 24.700'],['MM Card','Rp 29.800'],['MB Card','Rp 79.400'],['BP Card','Rp 43.000']  
+    ]  
+  },  
+  {  
+    id:'mlbb', title:'Mobile Legends', desc:'Diamonds & Starlight', packages:[  
+      ['15 Diamond','Rp 8.300'],['28 Diamond','Rp 13.200'],['36 Diamond','Rp 15.600'],['45 Diamond','Rp 17.200'],['50 Diamond','Rp 16.400'],['59 Diamond','Rp 18.800'],['60 Diamond','Rp 21.000'],['70 Diamond','Rp 23.400'],['80 Diamond','Rp 25.800'],['85 Diamond','Rp 26.300'],['100 Diamond','Rp 30.300'],['140 Diamond','Rp 41.000'],['170 Diamond','Rp 47.800'],['185 Diamond','Rp 55.200'],['240 Diamond','Rp 67.600'],['284 Diamond','Rp 79.400'],['344 Diamond','Rp 86.800'],['370 Diamond','Rp 104.100'],['408 Diamond','Rp 111.000'],['514 Diamond','Rp 138.700'],['568 Diamond','Rp 152.000'],['600 Diamond','Rp 161.000'],['706 Diamond','Rp 166.800'],['875 Diamond','Rp 218.000'],['1136 Diamond','Rp 292.700'],['2010 Diamond','Rp 480.500']  
+    ], extra:[  
+      ['Weekly Pass','Rp 29.000'],['Weekly Pass x2','Rp 59.300'],['Weekly Pass x3','Rp 86.400'],['Weekly Pass x4','Rp 115.800'],['Weekly Pass x5','Rp 145.000'],['Starlight','Rp 82.600'],['Starlight Plus','Rp 197.300'],['Twilight Pass','Rp 148.200'],['Coupon Pass','Rp 78.000']  
+    ]  
+  },  
+  {  
+    id:'pubg', title:'PUBG Mobile', desc:'UC & Royale Pass', packages:[  
+      ['30 UC','Rp 12.600'],['60 UC','Rp 19.000'],['80 UC','Rp 27.200'],['100 UC','Rp 32.000'],['180 UC','Rp 49.000'],['200 UC','Rp 57.200'],['325 UC','Rp 74.800'],['445 UC','Rp 111.700'],['550 UC','Rp 138.600'],['660 UC','Rp 146.700'],['720 UC','Rp 157.600'],['750 UC','Rp 183.400'],['800 UC','Rp 197.500'],['900 UC','Rp 208.400'],['1000 UC','Rp 241.300'],['1100 UC','Rp 253.000'],['1500 UC','Rp 331.800'],['3000 UC','Rp 645.000'],['3300 UC','Rp 648.400'],['3500 UC','Rp 716.200'],['4000 UC','Rp 775.700'],['5000 UC','Rp 991.600'],['6000 UC','Rp 1.200.500']  
+    ], extra:[  
+      ['Weekly Deal x1','Rp 15.500'],['Weekly Deal x2','Rp 44.000'],['Elite Royale Pass','Rp 166.300'],['Elite Pass Plus','Rp 380.524']  
+    ]  
+  },  
+  {  
+    id:'robux_vilog', title:'Robux VILOG', desc:'Robux packages', packages:[  
+      ['80 Robux','Rp 16.000'],['160 Robux','Rp 30.000'],['240 Robux','Rp 44.500'],['320 Robux','Rp 58.000'],['400 Robux','Rp 68.000'],['500 Robux','Rp 76.000'],['560 Robux','Rp 93.000'],['800 Robux','Rp 133.000'],['1000 Robux','Rp 144.000'],['1500 Robux','Rp 218.500'],['1600 Robux','Rp 253.000'],['2000 Robux','Rp 285.500'],['3000 Robux','Rp 430.000'],['4000 Robux','Rp 563.500']  
+    ]  
+  },  
+  {  
+    id:'robux_gamepass', title:'Robux Gamepass', desc:'Robux small packs', packages:[  
+      ['25 Robux','Rp 7.300'],['30 Robux','Rp 9.000'],['35 Robux','Rp 10.600'],['40 Robux','Rp 11.200'],['45 Robux','Rp 12.000'],['50 Robux','Rp 13.600'],['60 Robux','Rp 15.000'],['70 Robux','Rp 15.300'],['80 Robux','Rp 15.500'],['100 Robux','Rp 18.000'],['200 Robux','Rp 34.000'],['300 Robux','Rp 46.000'],['400 Robux','Rp 59.000'],['500 Robux','Rp 71.000'],['600 Robux','Rp 85.000'],['1000 Robux','Rp 137.000'],['1250 Robux','Rp 169.700'],['1500 Robux','Rp 203.000'],['2000 Robux','Rp 267.000'],['2300 Robux','Rp 308.000']  
+    ]  
+  },  
+  {  
+    id:'jasa_edit', title:'Jasa Edit', desc:'Edit foto/video', packages:[  
+      ['Solo','Rp 4.000'],['Solo + HD','Rp 7.000'],['Duo','Rp 6.000'],['Duo + HD','Rp 10.000'],['Squad','Rp 10.000'],['Squad + HD','Rp 15.000'],['Gabungan Duo','Rp 12.000'],['Gabungan Trio','Rp 18.000'],['Gabungan Squad','Rp 22.000']  
+    ]  
+  },  
+  {  
+    id:'hd_foto', title:'HD Foto', desc:'Paket foto HD', packages:[  
+      ['1 Foto','Rp 1.000 + CC 2.000'],['2 Foto','Rp 3.000 + CC 5.000'],['3 Foto','Rp 5.000 + CC 8.000'],['4 Foto','Rp 7.000 + CC 11.000'],['5 Foto','Rp 10.000 + CC 15.000']  
+    ]  
+  },  
+  {  
+    id:'panel_private', title:'Panel Private', desc:'Server private (RAM)', packages:[  
+      ['RAM 1GB','Rp 2.000'],['RAM 2GB','Rp 3.000'],['RAM 3GB','Rp 4.000'],['RAM 4GB','Rp 5.000'],['RAM 5GB','Rp 6.000'],['RAM 6GB','Rp 7.000'],['RAM 7GB','Rp 8.000'],['RAM 8GB','Rp 9.000'],['RAM 9GB','Rp 10.000'],['RAM 10GB','Rp 12.000'],['RAM UNLI','Rp 13.000']  
+    ]  
+  },  
+  {  
+    id:'panel_biasa', title:'Panel Biasa', desc:'Panel murah', packages:[  
+      ['RAM 500MB','Rp 500'],['RAM 1GB','Rp 1.000'],['RAM 2GB','Rp 2.000'],['RAM 3GB','Rp 3.000'],['RAM 4GB','Rp 4.000'],['RAM 5GB','Rp 5.000'],['RAM 6GB','Rp 6.000'],['RAM 7GB','Rp 7.000'],['RAM 8GB','Rp 8.000'],['RAM 9GB','Rp 9.000'],['RAM 10GB','Rp 10.000'],['RAM UNLI','Rp 12.000']  
+    ]  
+  },  
+  {  
+    id:'kebsos_tiktok', title:'Kebsos tiktok', desc:'Followers / Likes / Views / Save / Share', packages:[  
+    // Followers
+    ['Followers 100 (no refill)', 'Rp 5.000'], ['Followers 200 (no refill)', 'Rp 8.000'], ['Followers 500 (no refill)', 'Rp 15.300'], ['Followers 800 (no refill)', 'Rp 18.600'], ['Followers 1000 (no refill)', 'Rp 23.500'], ['Followers 1500 (no refill)', 'Rp 30.800'], ['Followers 2000 (no refill)', 'Rp 38.000'],
+    ['Followers 100 (refill 30d)', 'Rp 6.500'], ['Followers 200 (refill 30d)', 'Rp 8.800'], ['Followers 300 (refill 30d)', 'Rp 13.500'], ['Followers 500 (refill 30d)', 'Rp 16.400'], ['Followers 800 (refill 30d)', 'Rp 19.600'], ['Followers 1000 (refill 30d)', 'Rp 24.500'], ['Followers 1500 (refill 30d)', 'Rp 31.800'], ['Followers 2000 (refill 30d)', 'Rp 40.000'],
+
+    // Likes
+    ['Like 1.000 (no refill)', 'Rp 6.300'], ['Like 2.000 (no refill)', 'Rp 7.000'], ['Like 5.000 (no refill)', 'Rp 10.200'], ['Like 7.000 (no refill)', 'Rp 12.500'], ['Like 10.000 (no refill)', 'Rp 15.400'], ['Like 30.000 (no refill)', 'Rp 20.200'], ['Like 50.000 (no refill)', 'Rp 31.000'],
+    ['Like 1.000 (refill 30d)', 'Rp 6.500'], ['Like 2.000 (refill 30d)', 'Rp 7.500'], ['Like 5.000 (refill 30d)', 'Rp 11.200'], ['Like 7.000 (refill 30d)', 'Rp 13.400'], ['Like 10.000 (refill 30d)', 'Rp 16.400'], ['Like 30.000 (refill 30d)', 'Rp 22.200'], ['Like 50.000 (refill 30d)', 'Rp 32.000'],
+
+    // Views
+    ['Views 1.000', 'Rp 5.200'], ['Views 2.000', 'Rp 6.300'], ['Views 3.000', 'Rp 6.500'], ['Views 5.000', 'Rp 7.800'], ['Views 10.000', 'Rp 9.200'], ['Views 30.000', 'Rp 16.500'], ['Views 45.000', 'Rp 20.300'], ['Views 50.000', 'Rp 21.700'], ['Views 100.000', 'Rp 31.400'],
+
+    // Saves
+    ['Save 100', 'Rp 4.100'], ['Save 200', 'Rp 5.100'], ['Save 300', 'Rp 6.100'], ['Save 500', 'Rp 8.100'], ['Save 1.000', 'Rp 9.300'], ['Save 3.000', 'Rp 9.700'], ['Save 8.000', 'Rp 14.000'], ['Save 16.000', 'Rp 18.500'], ['Save 30.000', 'Rp 27.500'],
+    ['Save 100 (refill 30d)', 'Rp 5.100'], ['Save 200 (refill 30d)', 'Rp 6.100'], ['Save 300 (refill 30d)', 'Rp 7.100'], ['Save 500 (refill 30d)', 'Rp 9.100'], ['Save 1.000 (refill 30d)', 'Rp 10.500'], ['Save 3.000 (refill 30d)', 'Rp 10.700'], ['Save 8.000 (refill 30d)', 'Rp 14.500'], ['Save 16.000 (refill 30d)', 'Rp 19.000'], ['Save 30.000 (refill 30d)', 'Rp 28.000'],
+
+    // Share
+    ['Share 100', 'Rp 4.100'], ['Share 200', 'Rp 4.300'], ['Share 300', 'Rp 5.400'], ['Share 500', 'Rp 6.000'], ['Share 800', 'Rp 7.000'], ['Share 1.000', 'Rp 9.000'], ['Share 1.500', 'Rp 10.600'], ['Share 2.000', 'Rp 12.200'],
+    ['Share 100 (refill 30d)', 'Rp 5.100'], ['Share 200 (refill 30d)', 'Rp 6.300'], ['Share 300 (refill 30d)', 'Rp 7.400'], ['Share 500 (refill 30d)', 'Rp 8.000'], ['Share 800 (refill 30d)', 'Rp 9.000'], ['Share 1.000 (refill 30d)', 'Rp 10.000'], ['Share 1.500 (refill 30d)', 'Rp 11.600'], ['Share 2.000 (refill 30d)', 'Rp 13.200']
+    ]  
+  },  
+  {  
+    id:'kebsos_ig', title:'Kebsos IG', desc:'Followers / Likes / Views / Share', packages:[  
+      ['Followers 100 (no refill)','Rp 6.100'],['Followers 200 (no refill)','Rp 10.000'],['Followers 300 (no refill)','Rp 12.300'],['Followers 500 (no refill)','Rp 17.300'],['Followers 800 (no refill)','Rp 24.500'],['Followers 1000 (no refill)','Rp 27.600'],['Followers 2000 (no refill)','Rp 49.300'],['Followers 3000 (no refill)','Rp 71.800'],  
+      ['Followers 100 (refill 30d)','Rp 7.100'],['Followers 200 (refill 30d)','Rp 11.300'],['Followers 300 (refill 30d)','Rp 13.500'],['Followers 500 (refill 30d)','Rp 18.600'],['Followers 800 (refill 30d)','Rp 26.000'],['Followers 1000 (refill 30d)','Rp 28.600'],['Followers 2000 (refill 30d)','Rp 51.300'],['Followers 3000 (refill 30d)','Rp 72.800'],  
+      ['Like 100 (no refill)','Rp 4.500'],['Like 200 (no refill)','Rp 5.300'],['Like 300 (no refill)','Rp 6.300'],['Like 400 (no refill)','Rp 7.700'],['Like 500 (no refill)','Rp 8.200'],['Like 800 (no refill)','Rp 10.300'],['Like 1000 (no refill)','Rp 12.200'],['Like 3000 (no refill)','Rp 18.400'],['Like 5000 (no refill)','Rp 26.700'],  
+      ['Like 100 (refill 30d)','Rp 5.500'],['Like 200 (refill 30d)','Rp 6.100'],['Like 300 (refill 30d)','Rp 7.300'],['Like 400 (refill 30d)','Rp 8.700'],['Like 500 (refill 30d)','Rp 9.200'],['Like 800 (refill 30d)','Rp 12.400'],['Like 1000 (refill 30d)','Rp 13.200'],['Like 3000 (refill 30d)','Rp 20.000'],['Like 5000 (refill 30d)','Rp 28.000'],  
+      ['Views 100','Rp 500'],['Views 200','Rp 600'],['Views 300','Rp 700'],['Views 400','Rp 800'],['Views 500','Rp 900'],['Views 800','Rp 1.000'],['Views 10K','Rp 2.500'],['Views 30K','Rp 3.500'],['Views 50K','Rp 5.000'],['Views 100K','Rp 8.000'],['Views 200K','Rp 14.000'],  
+      ['Share 100','Rp 1.000'],['Share 200','Rp 1.300'],['Share 300','Rp 2.200'],['Share 400','Rp 3.500'],['Share 500','Rp 4.200'],['Share 800','Rp 5.300'],['Share 1000','Rp 6.500'],['Share 3000','Rp 8.200'],['Share 5000','Rp 9.700'],['Share 10K','Rp 12.500'],['Share 20K','Rp 15.700']  
+    ]  
+  },  
+  {  
+    id:'kebsos_wa', title:'Kebsos whatsapp', desc:'Followers / emoji', packages:[  
+    // Followers (no refill)
+    ['Followers 100 (no refill)', 'Rp 6.700'],
+    ['Followers 200 (no refill)', 'Rp 11.500'],
+    ['Followers 300 (no refill)', 'Rp 15.200'],
+    ['Followers 500 (no refill)', 'Rp 20.600'],
+    ['Followers 800 (no refill)', 'Rp 29.700'],
+    ['Followers 1000 (no refill)', 'Rp 36.200'],
+
+    // Reactions WA (no refill)
+    ['Like 100 👍🏻', 'Rp 6.000'],
+    ['Love 100 ❤️', 'Rp 6.000'],
+    ['Haha 100 😂', 'Rp 6.000'],
+    ['Wow 100 😮', 'Rp 6.000'],
+    ['Sad 100 😥', 'Rp 6.000'],
+    ['Pray 100 🙏🏻', 'Rp 6.000'],
+    ['Hi 100 👋🏻', 'Rp 7.400'],
+    ['Fire 100 🔥', 'Rp 7.400'],
+    ['Trophy 100 🏆', 'Rp 7.400'],
+    ['Party 100 🎉', 'Rp 7.400'],
+    ['Mix 100 MIX', 'Rp 8.000']
+    ]  
+  },  
+  {  
+    id:'paket_cc_am', title:'Paket cc am', desc:'paket cc dengan harga bervariasi', packages:[  
+    ['Paket 1 CC', 'Rp 4.000'],
+    ['Paket 5 CC', 'Rp 12.000'],
+    ['Paket 10 CC', 'Rp 16.000'],
+    ['Paket 15 CC', 'Rp 18.000'],
+    ['Paket 20 CC', 'Rp 21.000'],
+    ['Paket 25 CC', 'Rp 24.000'],
+    ['Paket 30 CC', 'Rp 27.000'],
+    ['Paket 35 CC', 'Rp 30.000'],
+    ['Paket 40 CC', 'Rp 33.000'],
+    ['Paket 45 CC', 'Rp 36.000'],
+    ['Paket 50 CC', 'Rp 43.000']
+    ]  
+  },  
+  {  
+    id:'Nokwa', title:'Nokos wa', desc:'Harga berdasarkan negara', packages:[  
+    ['Indo', 'Rp 6.000'],
+    ['Philippines', 'Rp 10.000'],
+    ['Malaysia', 'Rp 18.000'],
+    ['Thailand', 'Rp 14.000'],
+    ['Benin', 'Rp 11.000'],
+    ['Afganistan', 'Rp 10.000'],
+    ['Iran', 'Rp 10.000'],
+    ['Nepal', 'Rp 12.000'],
+    ['Myanmar', 'Rp 13.000'],
+    ['Afrika Sltan', 'Rp 15.000'],
+    ['Vietnam', 'Rp 14.000'],
+    ['Taiwan', 'Rp 22.000'],
+    ['Portugal', 'Rp 15.000']
+    ]  
+  }  
+];
+
+// render product cards  
+const grid = document.getElementById('productGrid');  
+PRODUCTS.forEach((p,idx)=>{  
+  const card = document.createElement('div'); card.className='card';  
+  card.innerHTML = `  
+    <h3>${p.title}</h3>  
+    <p>${p.desc || ''}</p>  
+    <div style="display:flex;align-items:center;justify-content:space-between">  
+      <div style="font-size:13px;color:#9b5a79">Lihat paket & pesan lewat WhatsApp</div>  
+      <div class="actions">  
+        <button class="btn outline" onclick="openPriceModal(${idx})">Daftar</button>  
+        <button class="btn primary" onclick="quickBuy(${idx})">Beli</button>  
+      </div>  
+    </div>`;  
+  grid.appendChild(card);  
+});  
+
+// modal controls  
+const modal = document.getElementById('priceModal');  
+const modalTitle = document.getElementById('modalTitle');  
+const selectPackage = document.getElementById('selectPackage');  
+const inputId = document.getElementById('inputId');  
+
+let currentProductIndex = null;  
+
+function openPriceModal(index){  
+  const p = PRODUCTS[index]; currentProductIndex = index;  
+  modalTitle.textContent = `${p.title} — Pilih Paket`;  
+  selectPackage.innerHTML = '';  
+  const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='-- pilih paket --'; selectPackage.appendChild(opt0);  
+  // show main packages first  
+  p.packages.forEach(pk=>{  
+    const opt = document.createElement('option'); opt.value = pk.join(' | '); opt.textContent = `${pk[0]} — ${pk[1]}`; selectPackage.appendChild(opt);  
+  });  
+  // extras if any  
+  if(p.extra) {  
+    const sep = document.createElement('option'); sep.disabled=true; sep.textContent='──────────── Extra / Special'; selectPackage.appendChild(sep);  
+    p.extra.forEach(pk=>{ const opt=document.createElement('option'); opt.value=pk.join(' | '); opt.textContent = `${pk[0]} — ${pk[1]}`; selectPackage.appendChild(opt); });  
+  }  
+
+  inputId.value='';  
+  modal.classList.add('open'); modal.setAttribute('aria-hidden','false');  
+}  
+function closePriceModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); }  
+
+function confirmPackage(){  
+  const p = PRODUCTS[currentProductIndex];  
+  const selected = selectPackage.value; if(!selected){alert('Silakan pilih paket');return}  
+  const note = inputId.value || '-';  
+  // selected format: "Label | Price"  
+  const [label,price] = selected.split(' | ');  
+  const pesan = `Halo kak, saya ingin order:%0AProduk: ${p.title}%0APaket: ${label}%0AHarga: ${price}%0AKeterangan: ${note}`;  
+  const url = `https://wa.me/${WA_NUMBER}?text=${pesan}`;  
+  window.open(url,'_blank'); closePriceModal();  
+}  
+
+// quick buy: if user presses Beli, send a short message (product name only)  
+function quickBuy(index){  
+  const p = PRODUCTS[index];  
+  const pesan = encodeURIComponent(`Halo kak, saya ingin order: Produk: ${p.title} (paket belum dipilih)\nMohon bantuannya.`);  
+  window.open(`https://wa.me/${WA_NUMBER}?text=${pesan}`,'_blank');  
+}  
+
+// update order now button to open chat  
+document.getElementById('orderNowBtn').addEventListener('click', (e)=>{  
+  // open chat with a default message  
+  e.preventDefault();  
+  const msg = encodeURIComponent('Halo kak, saya mau order / tanya produk di ALYASTORE');  
+  window.open(`https://wa.me/${WA_NUMBER}?text=${msg}`,'_blank');  
+});
+
+</script></body>
+
+</html>
